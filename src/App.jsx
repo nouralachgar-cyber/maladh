@@ -1,360 +1,332 @@
 import React, { useState } from 'react';
-import { Heart, Globe, ShieldAlert, ArrowLeft, ArrowRight, CheckCircle2, RefreshCw, Sparkles } from 'lucide-react';
+import { QUESTIONS, OPTIONS, FEATURES, getSeverityDetails } from './data/questions';
 
-const questionsData = [
-  { id: 1, en: "I felt bothered by things that usually don't bother me.", ar: "شعرت بالانزعاج من أمور لم تكن تزعجني في العادة." },
-  { id: 2, en: "I did not feel like eating; my appetite was poor.", ar: "لم تكن لدي رغبة في تناول الطعام، وكانت شهيتي ضعيفة." },
-  { id: 3, en: "I felt that I could not shake off the blues even with help from my family or friends.", ar: "شعرت أنني غير قادر على التخلص من الحزن حتى بمساعدة عائلتي أو أصدقائي." },
-  { id: 4, en: "I felt I was just as good as other people.", ar: "شعرت أنني لست أقل شأناً من الآخرين.", isPositive: true },
-  { id: 5, en: "I had trouble keeping my mind on what I was doing.", ar: "وجدت صعوبة في التركيز على ما أقوم به." },
-  { id: 6, en: "I felt depressed and downhearted.", ar: "شعرت بالإحباط والاكتئاب." },
-  { id: 7, en: "I felt that everything I did was an effort.", ar: "شعرت أن كل شيء أقوم به يتطلب مني جهداً شاقاً." },
-  { id: 8, en: "I felt hopeful about the future.", ar: "شعرت بالأمل تجاه المستقبل.", isPositive: true },
-  { id: 9, en: "I thought my life had been a failure.", ar: "شعرت وكأن حياتي كانت عبارة عن فشل." },
-  { id: 10, en: "I felt fearful or anxious about things.", ar: "شعرت بالخوف أو القلق بشأن الأشياء من حولي." },
-  { id: 11, en: "My sleep was restless and disturbed.", ar: "كان نومي غير مريح ومضطرباً." },
-  { id: 12, en: "I was happy and content.", ar: "شعرت بالسعادة والرضا.", isPositive: true },
-  { id: 13, en: "I talked less than usual.", ar: "تحدثت أقل بكثير من العادة." },
-  { id: 14, en: "I felt lonely, as if I had no one.", ar: "شعرت بالوحدة، وكأنه ليس لدي أحد." },
-  { id: 15, en: "People were unfriendly or distant towards me.", ar: "شعرت أن الناس غير ودودين أو بعيدون عني." },
-  { id: 16, en: "I enjoyed life and its small moments.", ar: "استمتعت بالحياة وبلحظاتها الصغيرة.", isPositive: true },
-  { id: 17, en: "I had crying spells or felt like crying.", ar: "نتابتني نوبات بكاء أو رغبة شديدة في البكاء." },
-  { id: 18, en: "I felt sad and heavy-hearted.", ar: "شعرت بحزن وثقل في قلبي." },
-  { id: 19, en: "I felt that people dislike me.", ar: "شعرت أن الناس لا يحبونني." },
-  { id: 20, en: "I could not get 'going' or find motivation to start tasks.", ar: "لم أستطع تحفيز نفسي للبدء في المهام اليومية." }
-];
-
-const options = [
-  { value: 0, labelEn: "Rarely or none of the time (less than 1 day)", labelAr: "نادراً أو لا أبداً (أقل من يوم)" },
-  { value: 1, labelEn: "Some or a little of the time (1-2 days)", labelAr: "بعض الوقت (من 1 إلى 2 أيام)" },
-  { value: 2, labelEn: "Occasionally / a moderate amount (3-4 days)", labelAr: "أحياناً / بشكل متوسط (من 3 إلى 4 أيام)" },
-  { value: 3, labelEn: "Most or all of the time (5-7 days)", labelAr: "معظم الوقت أو دائماً (من 5 إلى 7 أيام)" }
-];
+function LotusLogo({ className = "w-16 h-12" }) {
+  return (
+    <svg className={className} viewBox="0 0 100 75" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M50 67 C28 50 30 24 50 5 C70 24 72 50 50 67Z" stroke="#A99BD8" strokeWidth="3" />
+      <path d="M49 67 C25 69 9 54 5 34 C27 31 43 43 49 67Z" stroke="#A99BD8" strokeWidth="3" />
+      <path d="M51 67 C75 69 91 54 95 34 C73 31 57 43 51 67Z" stroke="#A4D8D3" strokeWidth="3" />
+      <path d="M50 67 C33 50 22 32 23 19 C42 24 52 43 50 67Z" stroke="#B6DDE9" strokeWidth="3" />
+      <path d="M50 67 C67 50 78 32 77 19 C58 24 48 43 50 67Z" stroke="#A4D8D3" strokeWidth="3" />
+      <path d="M18 58 Q50 79 82 58" stroke="#A99BD8" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default function App() {
-  const [lang, setLang] = useState('en');
-  const [started, setStarted] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [lang, setLang] = useState('ar'); // Defaulted to Arabic
+  const [activeTab, setActiveTab] = useState('home');
   const [answers, setAnswers] = useState({});
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showResults, setShowResults] = useState(false);
 
-  const isRtl = lang === 'ar';
+  const isAr = lang === 'ar';
+  const currentQ = QUESTIONS[currentIndex];
 
-  const handleSelectOption = (val) => {
-    const updated = { ...answers, [currentIndex]: val };
-    setAnswers(updated);
-    if (currentIndex < questionsData.length - 1) {
-      setTimeout(() => setCurrentIndex(currentIndex + 1), 180);
+  const toggleLanguage = () => {
+    setLang(prev => (prev === 'en' ? 'ar' : 'en'));
+  };
+
+  const handleSelectOption = (value) => {
+    setAnswers({ ...answers, [currentQ.id]: value });
+  };
+
+  const handleNext = () => {
+    if (currentIndex < QUESTIONS.length - 1) {
+      setCurrentIndex(currentIndex + 1);
     } else {
-      setTimeout(() => setIsCompleted(true), 200);
+      setShowResults(true);
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
-  };
-
-  const resetTest = () => {
-    setAnswers({});
-    setCurrentIndex(0);
-    setIsCompleted(false);
-    setStarted(false);
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
   };
 
   const calculateScore = () => {
-    let score = 0;
-    questionsData.forEach((q, idx) => {
-      const val = answers[idx] !== undefined ? answers[idx] : 0;
-      score += q.isPositive ? 3 - val : val;
+    let total = 0;
+    QUESTIONS.forEach((q) => {
+      if (q.id !== 18) {
+        total += answers[q.id] || 0;
+      }
     });
-    return score;
+    return total;
   };
 
-  const getResult = (score) => {
-    if (score <= 15) {
-      return {
-        titleEn: "Minimal Symptoms",
-        titleAr: "أعراض بسيطة أو منعدمة",
-        descEn: "You are currently experiencing very low levels of distress. Keep prioritizing your self-care and mental wellness!",
-        descAr: "تمر بمستويات بسيطة جداً من الضغط النفسي. استمر في الاهتمام بنفسك وصحتك النفسية!"
-      };
-    } else if (score <= 21) {
-      return {
-        titleEn: "Mild Depressive Symptoms",
-        titleAr: "أعراض اكتئاب خفيفة",
-        descEn: "You may be facing some emotional fatigue. Rest, gentle routines, and talking to close friends can bring clarity.",
-        descAr: "قد تكون تمر ببعض الإرهاق النفسي. الراحة والحديث مع شخص مقرب قد يساعدك كثيراً."
-      };
-    } else if (score <= 28) {
-      return {
-        titleEn: "Moderate Depressive Symptoms",
-        titleAr: "أعراض اكتئاب متوسطة",
-        descEn: "You are carrying a noticeable emotional weight right now. Reaching out to a counselor or supportive loved one is highly recommended.",
-        descAr: "تحمل عبئاً نفسياً ملحوظاً في هذه الفترة. التواصل مع مختص أو شخص قريب سيكون خطوة ممتازة."
-      };
-    }
-    return {
-      titleEn: "Significant Depressive Symptoms",
-      titleAr: "أعراض اكتئاب شديدة",
-      descEn: "Your responses show heavy emotional strain. Please remember that seeking professional support is a strong and healthy step forward.",
-      descAr: "توضح الإجابات وجود ضغط نفسي وحزن ثقيل. طلب المساعدة من أخصائي نفسي هو خطوة شجاعة ومهمة جداً."
-    };
-  };
-
-  const progressPercent = Math.round(((currentIndex + 1) / questionsData.length) * 100);
   const score = calculateScore();
-  const result = getResult(score);
-  const answeredCount = Object.keys(answers).length;
+  const resultDetails = getSeverityDetails(score);
+  const hasSafetyWarning = answers[18] && answers[18] > 0;
 
   return (
-    <div
-      dir={isRtl ? 'rtl' : 'ltr'}
-      className="min-h-screen flex flex-col bg-[#FBF5DD] text-[#0D530E] selection:bg-[#E7E1B1] selection:text-[#0D530E] antialiased"
-      style={{ fontFamily: "'Outfit','IBM Plex Sans Arabic','Segoe UI',system-ui,sans-serif" }}
-    >
-      {/* Header */}
-      <header className="sticky top-0 z-30 w-full bg-[#FBF5DD]/80 backdrop-blur-xl border-b border-[#E7E1B1]/70">
-        <div className="mx-auto max-w-6xl px-5 md:px-8 h-[64px] md:h-[72px] flex items-center justify-between gap-4">
-          {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-[#306D29] flex items-center justify-center shadow-sm shadow-[#306D29]/20 shrink-0">
-              <Heart className="w-[18px] h-[18px] md:w-5 md:h-5 text-[#FBF5DD] fill-[#FBF5DD]" />
-            </div>
-            <span className="text-[19px] md:text-[22px] font-extrabold tracking-tight text-[#0D530E]">
-              Maladh <span className="font-light text-[#306D29]">|</span> <span className="font-bold">ملاذ</span>
-            </span>
+    <div dir={isAr ? 'rtl' : 'ltr'} className="min-h-screen bg-[#FBFAF8] text-[#293E5E] font-sans">
+      
+      {/* NAVBAR */}
+      <header className="h-24 px-6 md:px-16 flex items-center justify-between gap-6 bg-[#FBFAF8]/95 sticky top-0 z-50 border-b border-purple-100/50 backdrop-blur-sm">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+          <LotusLogo className="w-16 h-12 md:w-20 md:h-14" />
+          <div className="flex flex-col leading-none">
+            <span className="text-2xl font-bold text-[#293E5E]">ملاذ</span>
+            <span className="text-sm md:text-base font-medium text-[#A99BD8] mt-0.5">Maladh</span>
           </div>
+        </div>
 
-          {/* Language toggle — pill shaped */}
-          <button
-            onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
-            aria-label="Toggle language"
-            className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-[#306D29] bg-transparent px-5 py-2 text-sm font-semibold text-[#306D29] shadow-sm hover:bg-[#306D29] hover:text-[#FBF5DD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#306D29] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF5DD] transition-all duration-200"
+        <nav className="hidden md:flex items-center gap-8">
+          <button 
+            className={`text-base font-medium transition-colors py-1 relative ${activeTab === 'home' ? 'text-[#9284CB] font-semibold border-b-2 border-[#A99BD8]' : 'text-slate-600 hover:text-[#9284CB]'}`}
+            onClick={() => setActiveTab('home')}
           >
-            <Globe className="w-4 h-4 shrink-0" />
-            <span className="tracking-wide">{lang === 'en' ? 'العربية' : 'English'}</span>
+            {isAr ? 'الرئيسية' : 'Home'}
+          </button>
+          <button 
+            className={`text-base font-medium transition-colors py-1 relative ${activeTab === 'test' ? 'text-[#9284CB] font-semibold border-b-2 border-[#A99BD8]' : 'text-slate-600 hover:text-[#9284CB]'}`}
+            onClick={() => setActiveTab('test')}
+          >
+            {isAr ? 'الاختبار' : 'Test'}
+          </button>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={toggleLanguage} 
+            className="bg-white border border-purple-100 text-[#293E5E] px-4 py-2 rounded-full text-xs md:text-sm font-semibold hover:bg-purple-50 transition-colors shadow-sm"
+          >
+            🌐 {isAr ? 'English' : 'العربية'}
+          </button>
+          <button 
+            onClick={() => setActiveTab('test')} 
+            className="bg-[#A99BD8] hover:bg-[#9586CD] text-white px-5 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 transition-all transform hover:-translate-y-0.5 shadow-sm"
+          >
+            <span>{isAr ? 'ابدأ الاختبار' : 'Take the Test'}</span>
+            <span>{isAr ? '←' : '→'}</span>
           </button>
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex-1 flex justify-center px-4 md:px-6 py-8 md:py-12">
-        <div className="w-full max-w-[640px]">
-          {/* Hero Section */}
-          {!started && !isCompleted && (
-            <section className="text-center py-6 md:py-10 animate-in fade-in">
-              {/* Tag badge */}
-              <div className="inline-flex items-center gap-2 bg-[#E7E1B1] text-[#306D29] px-4 py-1.5 rounded-full text-xs md:text-[13px] font-bold tracking-wide shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 opacity-70" />
-                <span>{lang === 'en' ? 'A Safe Place for Your Mind' : 'مساحة آمنة لراحتك النفسية'}</span>
-              </div>
-
-              <h1 className="mt-6 text-[30px] md:text-[42px] font-extrabold leading-[1.15] tracking-tight text-[#0D530E] text-balance">
-                {lang === 'en' ? (
-                  <>
-                    Understand Your Feelings <br className="hidden md:block" />
-                    <span className="text-[#306D29]">with Science &amp; Compassion</span>
-                  </>
-                ) : (
-                  <>افهم مشاعرك باختبار علمي هادئ وموثوق</>
-                )}
-              </h1>
-
-              <p className="mt-4 md:mt-5 text-[15px] md:text-[17px] leading-7 text-[#306D29]/90 max-w-[52ch] mx-auto font-medium">
-                {lang === 'en'
-                  ? 'Welcome to Maladh. Take a quiet moment for yourself with a clinically validated self-assessment designed to help you reflect on your emotional well-being — gently, privately, and at your own pace.'
-                  : 'مرحباً بك في ملاذ. خذ لحظة هادئة لنفسك مع هذا التقييم الذاتي المعتمد علمياً، لمساعدتك في فهم حالتك النفسية بكل هدوء وخصوصية.'}
-              </p>
-
-              {/* CTA */}
-              <div className="mt-8 md:mt-10">
-                <button
-                  onClick={() => setStarted(true)}
-                  className="inline-flex items-center justify-center gap-2 bg-[#306D29] text-[#FBF5DD] px-8 md:px-10 py-3.5 md:py-4 rounded-full text-[17px] md:text-lg font-bold shadow-[0_8px_24px_rgba(48,109,41,0.25)] hover:bg-[#0D530E] hover:shadow-[0_12px_28px_rgba(48,109,41,0.30)] hover:-translate-y-[1px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#306D29] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF5DD] transition-all duration-200"
-                >
-                  <span>{lang === 'en' ? 'Start Free Assessment' : 'ابدأ الاختبار الآن'}</span>
-                  {isRtl ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
-                </button>
-                <p className="mt-3 text-xs font-medium text-[#306D29]/60">
-                  {lang === 'en' ? `20 questions • ~3 minutes • ${answeredCount > 0 ? 'Continue where you left off' : 'Completely private'}` : '20 سؤالاً • حوالي 3 دقائق • خصوصية تامة'}
+      {/* MAIN CONTENT */}
+      <main>
+        {activeTab === 'home' ? (
+          <>
+            {/* HERO SECTION */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 min-h-[500px] px-6 md:px-16 py-10 bg-gradient-to-r from-[#EEF5F7] via-[#F2F5F6] to-[#E7F4F5]">
+              <div className="flex flex-col justify-center py-6">
+                <p className="text-[#9689CB] text-xs md:text-sm font-bold tracking-widest uppercase mb-3">
+                  {isAr ? 'صحتك النفسية تهمنا' : 'YOUR MENTAL HEALTH MATTERS'}
                 </p>
-              </div>
-
-              {/* Trust / disclaimer */}
-              <div className="mt-10 md:mt-14 flex items-center justify-center gap-2 border-t border-[#E7E1B1] pt-6 text-xs md:text-[13px] font-medium text-[#306D29]/80 px-2">
-                <ShieldAlert className="w-4 h-4 shrink-0 text-[#306D29]" />
-                <span className="leading-relaxed">
-                  {lang === 'en' ? 'This tool is for self-awareness only, not a medical diagnosis.' : 'هذا الاختبار للتوعية الذاتية فقط، ولا يعتبر تشخيصاً طبياً.'}
-                </span>
-              </div>
-            </section>
-          )}
-
-          {/* Question Card */}
-          {started && !isCompleted && (
-            <section className="bg-white rounded-[28px] md:rounded-[32px] p-6 md:p-10 shadow-[0_8px_40px_rgba(13,83,14,0.06)] border border-[#E7E1B1]/60 space-y-6 md:space-y-7">
-              {/* Progress */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs font-bold tracking-widest uppercase text-[#306D29]">
-                  <span className="tracking-wide">
-                    {lang === 'en' ? `Question ${currentIndex + 1} of ${questionsData.length}` : `السؤال ${currentIndex + 1} من ${questionsData.length}`}
-                  </span>
-                  <span className="tabular-nums bg-[#FBF5DD] border border-[#E7E1B1] px-2.5 py-1 rounded-full text-[#0D530E]">{progressPercent}%</span>
+                <h1 className="text-3xl md:text-5xl font-bold text-[#293E5E] leading-tight">
+                  {isAr ? 'لست وحدك...' : "You're not alone..."}
+                </h1>
+                <div className="text-3xl md:text-4xl font-bold text-[#A095D1] mt-2 flex items-center gap-3">
+                  <span>ملاذ</span>
+                  <span className="text-2xl font-medium text-slate-400">|</span>
+                  <span>Maladh</span>
                 </div>
-                <div className="h-2.5 w-full bg-[#E7E1B1]/60 rounded-full overflow-hidden p-1">
-                  <div
-                    className="h-full bg-[#306D29] rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${progressPercent}%` }}
-                    role="progressbar"
-                    aria-valuenow={progressPercent}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
+
+                <p className="text-slate-600 text-base leading-relaxed my-6 max-w-xl">
+                  {isAr 
+                    ? 'مساحة آمنة لفهم مشاعرك. خذ اختبار الاكتئاب واخطُ الخطوة الأولى نحو مستقبل أكثر صحة وإشراقاً.' 
+                    : 'A safe space to understand your feelings. Take our depression test and take the first step towards a healthier, brighter you.'}
+                </p>
+
+                <div className="flex items-center gap-6">
+                  <button 
+                    onClick={() => setActiveTab('test')} 
+                    className="bg-[#A99BD8] hover:bg-[#9586CD] text-white px-7 py-3.5 rounded-full font-semibold text-base flex items-center gap-3 transition-all transform hover:-translate-y-0.5 shadow-md"
+                  >
+                    <span>{isAr ? 'ابدأ الاختبار' : 'Take the Test'}</span>
+                    <span>{isAr ? '←' : '→'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* HERO IMAGE CONTAINER */}
+              <div className="flex items-center justify-center mt-8 lg:mt-0">
+                <div className="w-full max-w-lg bg-white rounded-3xl p-3 shadow-xl border border-purple-50 relative overflow-hidden">
+                  <div className="absolute top-6 right-8 italic text-[#A095D1] font-bold text-sm leading-tight text-right z-10 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-purple-100 shadow-sm">
+                    Better<br />Days<br />Ahead ♡
+                  </div>
+                  <img 
+                    src="/maladh-hero.png" 
+                    alt="Maladh Hero Illustration" 
+                    className="w-full h-[350px] md:h-[420px] object-cover rounded-2xl"
                   />
                 </div>
               </div>
+            </section>
 
-              {/* Question */}
-              <div className="space-y-2 pt-1">
-                <h2 className="text-[19px] md:text-[22px] font-bold leading-7 md:leading-8 text-[#0D530E] text-start text-balance">
-                  {lang === 'en' ? questionsData[currentIndex].en : questionsData[currentIndex].ar}
-                </h2>
-                <p className="text-xs md:text-[13px] font-medium text-[#306D29]/70 text-start">
-                  {lang === 'en' ? 'How often have you felt this way during the past week?' : 'كم مرة شعرت بهذا الإحساس خلال الأسبوع الماضي؟'}
-                </p>
-              </div>
+            {/* FEATURES SECTION */}
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 md:px-16 py-16 bg-[#FBFAF8]">
+              {FEATURES.map((feat) => (
+                <div key={feat.titleEn} className="p-2">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 text-2xl font-bold ${feat.bg}`}>
+                    {feat.icon}
+                  </div>
+                  <h3 className="text-[#293E5E] font-bold text-lg mb-1">
+                    {isAr ? feat.titleAr : feat.titleEn}
+                  </h3>
+                  <p className="text-slate-500 text-xs md:text-sm leading-relaxed">
+                    {isAr ? feat.descAr : feat.descEn}
+                  </p>
+                </div>
+              ))}
+            </section>
+          </>
+        ) : (
+          /* TEST SECTION */
+          <section className="max-w-3xl mx-auto px-4 py-10">
+            <div className="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-purple-100">
+              {!showResults ? (
+                <>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-bold text-[#293E5E] text-sm md:text-base flex items-center gap-2">
+                      🧠 {isAr ? 'اختبار الاكتئاب النفسي' : 'Depression Screening'}
+                    </span>
+                    <span className="bg-purple-50 text-[#9383C7] text-xs md:text-sm font-bold px-3 py-1 rounded-full">
+                      {isAr ? `السؤال ${currentIndex + 1} من ${QUESTIONS.length}` : `Question ${currentIndex + 1} of ${QUESTIONS.length}`}
+                    </span>
+                  </div>
 
-              {/* Options — choice cards */}
-              <div className="grid gap-3 md:gap-3.5">
-                {options.map((opt) => {
-                  const isSelected = answers[currentIndex] === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => handleSelectOption(opt.value)}
-                      className={`group relative flex w-full items-center justify-between gap-4 rounded-2xl border-2 px-4 md:px-5 py-4 md:py-[18px] text-start text-sm md:text-[14.5px] font-medium leading-5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#306D29] focus-visible:ring-offset-2 focus-visible:ring-offset-white
-                        ${
-                          isSelected
-                            ? 'border-[#306D29] bg-[#E7E1B1] text-[#0D530E] shadow-sm shadow-[#306D29]/10'
-                            : 'border-[#E7E1B1]/70 bg-[#FBF5DD] text-[#0D530E]/90 hover:bg-white hover:border-[#306D29]/30 hover:shadow-sm hover:shadow-[#306D29]/5'
-                        }`}
+                  {/* PROGRESS BAR */}
+                  <div className="w-full h-2 bg-purple-50 rounded-full mb-8 overflow-hidden">
+                    <div 
+                      className="h-full bg-[#A99BD8] transition-all duration-300"
+                      style={{ width: `${((currentIndex + 1) / QUESTIONS.length) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* QUESTION */}
+                  <h2 className="text-lg md:text-xl font-bold text-[#293E5E] leading-relaxed mb-8">
+                    {isAr ? currentQ.ar : currentQ.en}
+                  </h2>
+
+                  {/* OPTIONS GRID */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    {OPTIONS.map((opt) => {
+                      const isSelected = answers[currentQ.id] === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleSelectOption(opt.value)}
+                          className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
+                            isSelected 
+                              ? 'bg-purple-50 border-[#9383C7] shadow-sm' 
+                              : 'bg-slate-50/50 border-slate-200 hover:bg-purple-50/40 hover:border-[#A99BD8]'
+                          } ${isAr ? 'text-right' : 'text-left'}`}
+                        >
+                          <span className="font-bold text-[#293E5E] text-sm md:text-base">
+                            {isAr ? opt.titleAr : opt.titleEn}
+                          </span>
+                          <span className="text-xs font-semibold text-[#8C82B5] bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
+                            {isAr ? opt.subtitleAr : opt.subtitleEn}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="flex justify-between items-center pt-2">
+                    <button 
+                      onClick={handlePrev} 
+                      disabled={currentIndex === 0} 
+                      className="bg-slate-100 text-[#293E5E] px-6 py-2.5 rounded-full font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200 transition-colors"
                     >
-                      <span className={`${isSelected ? 'font-bold' : 'font-medium'} flex-1 text-start`}>{lang === 'en' ? opt.labelEn : opt.labelAr}</span>
-                      <span
-                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                          isSelected ? 'bg-[#306D29] border-[#306D29] text-white' : 'border-[#306D29]/20 bg-white group-hover:border-[#306D29]/30'
-                        }`}
-                        aria-hidden
-                      >
-                        {isSelected ? <CheckCircle2 className="w-4 h-4 text-white" /> : <span className="w-2 h-2 rounded-full bg-[#E7E1B1] opacity-0 group-hover:opacity-100 transition-opacity" />}
-                      </span>
+                      {isAr ? 'السابق' : 'Previous'}
                     </button>
-                  );
-                })}
-              </div>
+                    <button 
+                      onClick={handleNext} 
+                      disabled={answers[currentQ.id] === undefined} 
+                      className="bg-[#A99BD8] hover:bg-[#9586CD] text-white px-7 py-2.5 rounded-full font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      {currentIndex === QUESTIONS.length - 1 ? (isAr ? 'إنهاء ورؤية النتيجة' : 'Finish & View Result') : (isAr ? 'التالي' : 'Next')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* RESULTS SECTION */
+                <div className="py-4">
+                  <div className="text-center mb-8">
+                    <span className="text-3xl mb-2 block">🌿</span>
+                    <h2 className="text-2xl md:text-3xl font-bold text-[#293E5E]">
+                      {isAr ? 'نتيجة التقييم النفسي' : 'Your Assessment Results'}
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-1">
+                      {isAr ? 'بناءً على إجاباتك خلال الأسبوعين الماضيين' : 'Based on your answers for the past two weeks'}
+                    </p>
+                  </div>
 
-              {/* Navigation */}
-              <div className="flex items-center justify-between gap-4 border-t border-[#E7E1B1]/60 pt-6">
-                <button
-                  onClick={handlePrev}
-                  disabled={currentIndex === 0}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#E7E1B1] bg-white px-5 py-2.5 text-sm font-bold text-[#306D29] shadow-sm hover:bg-[#FBF5DD] hover:border-[#306D29]/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#306D29] transition-colors"
-                >
-                  {isRtl ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-                  <span>{lang === 'en' ? 'Previous' : 'السابق'}</span>
-                </button>
+                  {/* SCORE & LEVEL BOX */}
+                  <div className="bg-gradient-to-b from-purple-50/60 to-white border border-purple-100 p-6 rounded-3xl mb-8 text-center shadow-sm">
+                    <p className="text-xs font-bold text-[#8C82B5] uppercase tracking-wider mb-1">
+                      {isAr ? 'النتيجة الإجمالية' : 'Total Score'}
+                    </p>
+                    <h1 className="text-5xl font-extrabold text-[#9383C7] my-2">
+                      {score} <span className="text-lg text-slate-400 font-normal">/ 57</span>
+                    </h1>
 
-                <span className="hidden sm:inline text-xs font-medium text-[#306D29]/60 text-center">
-                  {answers[currentIndex] !== undefined
-                    ? lang === 'en'
-                      ? 'Answer saved • Continue'
-                      : 'تم حفظ الإجابة • تابع'
-                    : lang === 'en'
-                      ? 'Select an answer to proceed'
-                      : 'اختر إجابة للمتابعة'}
-                </span>
+                    {/* SEVERITY BADGE */}
+                    <div className={`inline-block mt-3 px-5 py-2 rounded-full border font-bold text-sm md:text-base ${resultDetails.color}`}>
+                      {isAr ? resultDetails.levelAr : resultDetails.levelEn}
+                    </div>
 
-                <span className="text-xs font-bold tabular-nums text-[#0D530E]/60">
-                  {currentIndex + 1} / {questionsData.length}
-                </span>
-              </div>
-            </section>
-          )}
+                    <p className="text-slate-600 text-sm md:text-base mt-4 max-w-lg mx-auto leading-relaxed">
+                      {isAr ? resultDetails.descAr : resultDetails.descEn}
+                    </p>
+                  </div>
 
-          {/* Results */}
-          {isCompleted && (
-            <section className="flex flex-col gap-5 md:gap-6 animate-in fade-in">
-              {/* Score card */}
-              <div className="bg-white rounded-[28px] md:rounded-[32px] p-7 md:p-10 text-center shadow-[0_8px_40px_rgba(13,83,14,0.06)] border border-[#E7E1B1]/60 space-y-4">
-                <div className="inline-flex items-center gap-2 bg-[#E7E1B1] text-[#0D530E] px-4 py-1.5 rounded-full text-xs md:text-sm font-bold tracking-wide">
-                  <span className="w-2 h-2 rounded-full bg-[#306D29] animate-pulse" />
-                  {lang === 'en' ? result.titleEn : result.titleAr}
-                </div>
+                  {/* SAFETY WARNING IF QUESTION 18 ANSWERED */}
+                  {hasSafetyWarning && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 mb-8 text-rose-800 text-sm leading-relaxed flex items-start gap-3">
+                      <span className="text-2xl">⚠️</span>
+                      <div>
+                        <strong className="block font-bold mb-1 text-rose-900">
+                          {isAr ? 'ملاحظة هامة جداً لسلامتك:' : 'Important Safety Note:'}
+                        </strong>
+                        {isAr 
+                          ? 'لقد أشرت إلى وجود أفكار تؤذيك أو تشعرك برغبة في الاختفاء. نتمنى منك عدم البقاء وحدك والتحدث فوراً مع أخصائي نفسي أو شخص مقرب تثق به.'
+                          : 'You indicated thoughts of harm or wanting to disappear. Please do not stay alone with these thoughts. We strongly urge you to reach out to a professional or a trusted loved one immediately.'}
+                      </div>
+                    </div>
+                  )}
 
-                <h2 className="text-[24px] md:text-[28px] font-extrabold tracking-tight text-[#0D530E] leading-tight">
-                  {lang === 'en' ? 'Your Assessment Result' : 'نتيجة التقييم الخاص بك'}
-                </h2>
+                  {/* RECOMMENDATIONS & TIPS */}
+                  <div className="bg-white border border-slate-100 rounded-2xl p-6 mb-8 shadow-sm">
+                    <h3 className="font-bold text-[#293E5E] text-base md:text-lg mb-4 flex items-center gap-2">
+                      💡 {isAr ? 'نصائح وإرشادات مخصصة لك:' : 'Personalized Recommendations:'}
+                    </h3>
+                    <ul className="space-y-3">
+                      {(isAr ? resultDetails.tipsAr : resultDetails.tipsEn).map((tip, idx) => (
+                        <li key={idx} className="flex items-start gap-3 text-slate-600 text-sm md:text-base leading-relaxed">
+                          <span className="text-[#A99BD8] font-bold">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-                <p className="text-[15px] md:text-[16px] leading-7 text-[#306D29] font-medium max-w-[48ch] mx-auto text-balance">
-                  {lang === 'en' ? result.descEn : result.descAr}
-                </p>
-
-                {/* Score pill */}
-                <div className="pt-2">
-                  <div className="inline-flex items-center gap-3 bg-[#FBF5DD] border border-[#E7E1B1] rounded-full px-5 py-2.5">
-                    <span className="text-xs font-bold tracking-widest uppercase text-[#306D29]/70">{lang === 'en' ? 'Score' : 'النتيجة'}</span>
-                    <span className="text-lg font-extrabold tabular-nums text-[#0D530E]">{score} / 60</span>
-                    <span className="w-px h-4 bg-[#E7E1B1]" />
-                    <span className="text-xs font-semibold text-[#306D29]">{progressPercent}%</span>
+                  {/* ACTION BUTTONS */}
+                  <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-2">
+                    <button 
+                      onClick={() => { setAnswers({}); setCurrentIndex(0); setShowResults(false); }} 
+                      className="w-full sm:w-auto bg-[#A99BD8] hover:bg-[#9586CD] text-white px-8 py-3 rounded-full font-semibold text-sm transition-all shadow-md"
+                    >
+                      {isAr ? 'إعادة الاختبار' : 'Retake Test'}
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('home')} 
+                      className="w-full sm:w-auto bg-slate-100 text-[#293E5E] hover:bg-slate-200 px-8 py-3 rounded-full font-semibold text-sm transition-colors"
+                    >
+                      {isAr ? 'العودة للرئيسية' : 'Back to Home'}
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Encouragement box — deep green */}
-              <div className="bg-[#306D29] text-[#FBF5DD] rounded-[28px] md:rounded-[32px] p-7 md:p-10 shadow-[0_12px_32px_rgba(48,109,41,0.25)] space-y-4 relative overflow-hidden">
-                {/* subtle decoration */}
-                <div className="pointer-events-none absolute -top-16 -end-16 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-                <div className="pointer-events-none absolute -bottom-12 -start-12 w-32 h-32 rounded-full bg-[#E7E1B1]/15 blur-2xl" />
-
-                <div className="relative flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#FBF5DD]/15 flex items-center justify-center">
-                    <Heart className="w-5 h-5 fill-[#FBF5DD] text-[#FBF5DD]" />
-                  </div>
-                  <h3 className="text-[18px] md:text-xl font-bold tracking-tight">{lang === 'en' ? 'You Are Not Alone' : 'تذكر أنك لست بمفردك'}</h3>
-                </div>
-
-                <p className="relative text-[14px] md:text-[15px] leading-7 text-[#FBF5DD]/95 font-medium text-start">
-                  {lang === 'en'
-                    ? "Taking this self-assessment is a courageous first step. Depression can trick us into feeling isolated, but your emotions are real and help is always within reach. You don't have to carry this burden by yourself."
-                    : "إجراء هذا الاختبار خطوة شجاعة حقيقية. الاكتئاب قد يوهمك أنك وحدك، لكن مشاعرك حقيقية وهناك دائماً أمل ودعم بانتظارك. لست مجبراً على حمل هذا العبء بمفردك."}
-                </p>
-                <p className="relative text-[13px] md:text-sm font-bold text-[#E7E1B1] text-start">
-                  {lang === 'en' ? 'Reach out to someone you trust or a professional. Small steps lead to big light.' : 'تحدث مع شخص ترتاح له أو أخصائي نفسي. الخطوات الصغيرة تبني الأمل.'}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={resetTest}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-[1.5px] border-[#306D29] bg-white px-7 py-3 text-sm font-bold text-[#306D29] shadow-sm hover:bg-[#306D29] hover:text-[#FBF5DD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#306D29] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF5DD] transition-all"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>{lang === 'en' ? 'Retake Assessment' : 'إعادة الاختبار'}</span>
-                </button>
-                <span className="text-xs text-[#306D29]/60 font-medium hidden sm:block">•</span>
-                <span className="text-xs text-[#306D29]/60 font-medium text-center">
-                  {lang === 'en' ? 'Your answers stay on this device only.' : 'إجاباتك تبقى على هذا الجهاز فقط.'}
-                </span>
-              </div>
-            </section>
-          )}
-        </div>
+              )}
+            </div>
+          </section>
+        )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[#E7E1B1]/70 py-5 text-center">
-        <p className="text-xs font-medium tracking-wide text-[#306D29]/70">Maladh © 2026 — Created with care &amp; compassion. ملاذ — صُنع بعناية ومودّة</p>
-      </footer>
     </div>
   );
 }

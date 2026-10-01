@@ -2,13 +2,51 @@
 @import "tailwindcss";
 
 @theme {
-  --color-maladh-bg: #FBF5DD;
-  --color-maladh-card: #E7E1B1;
-  --color-maladh-primary: #306D29;
-  --color-maladh-dark: #0D530E;
+  --color-maladh-primary: #A99BD8;
+  --color-maladh-primary-dark: #9383C7;
+  --color-maladh-bg: #FBFAF8;
+  --color-maladh-bg-alt: #EEF5F7;
+  --color-maladh-text: #293E5E;
+  --color-maladh-text-muted: #64748B;
 }
 
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Outfit', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+
+[dir="rtl"] {
+  font-family: 'IBM Plex Sans Arabic', 'Outfit', system-ui, sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: 'Outfit', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+
+input[type="radio"] {
+  accent-color: #A99BD8;
+}
+
+input[type="radio"]:focus-visible {
+  outline: 2px solid #A99BD8;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #A99BD8;
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: #A99BD8;
+  color: white;
 }

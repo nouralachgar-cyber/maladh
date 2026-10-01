@@ -8,11 +8,20 @@ export default {
     extend: {
       colors: {
         maladh: {
-          bg: '#FBF5DD',      // الخلفية الناعمة
-          card: '#E7E1B1',    // البطاقات والتظليل
-          primary: '#306D29', // الأخضر المريح للأزرار والعناوين
-          dark: '#0D530E',    // الأخضر الداكن للنصوص
+          primary: '#A99BD8',   // Soft Purple - Primary accent
+          primaryDark: '#9383C7', // Darker Purple
+          bg: '#FBFAF8',        // Soft off-white background
+          bgAlt: '#EEF5F7',     // Alternate light background
+          text: '#293E5E',      // Dark Slate Blue - Primary text
+          textMuted: '#64748B', // Muted text
         }
+      },
+      borderRadius: {
+        '3xl': '1.5rem',
+      },
+      boxShadow: {
+        'soft': '0 2px 15px -3px rgba(169, 155, 216, 0.1), 0 10px 20px -2px rgba(169, 155, 216, 0.04)',
+        'card': '0 4px 20px -2px rgba(169, 155, 216, 0.08)',
       }
     },
   },
